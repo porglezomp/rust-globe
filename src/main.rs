@@ -1,5 +1,11 @@
 #[macro_use]
 extern crate glium;
+extern crate cgmath;
+
+use glium::{DisplayBuild, Surface, VertexBuffer, IndexBuffer, Program};
+use glium::glutin::{WindowBuilder, Event};
+use glium::index::PrimitiveType;
+use cgmath::{Matrix4, Vector3, conv};
 
 #[derive(Clone, Copy)]
 struct Vertex {
@@ -8,10 +14,6 @@ struct Vertex {
 implement_vertex!(Vertex, position);
 
 fn main() {
-    use glium::{DisplayBuild, Surface, VertexBuffer, IndexBuffer, Program};
-    use glium::glutin::{WindowBuilder, Event};
-    use glium::index::PrimitiveType;
-
     let display = WindowBuilder::new()
         .with_dimensions(1024, 786)
         .with_title("Hello, World!")
@@ -35,12 +37,11 @@ fn main() {
     let fragment_shader_src = include_str!("fragment.glsl");
     let program = Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
 
-    let mut t: f32 = 0.0;
+    let matrix = Matrix4::from_translation(Vector3::new(0.5, 0.3, 0.2)) * Matrix4::from_scale(0.5f32);
     loop {
-        t += 0.01;
         let mut frame = display.draw();
         frame.clear_color(0.0, 0.0, 0.0, 0.0);
-        frame.draw(&vertex_buffer, &indices, &program, &uniform! { t: t },
+        frame.draw(&vertex_buffer, &indices, &program, &uniform! { matrix: conv::array4x4(matrix) },
                    &Default::default()).unwrap();
         frame.finish().expect("Succeeded drawing");
 

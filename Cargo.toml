@@ -5,3 +5,4 @@ authors = ["Caleb Jones <self@calebjones.net>"]
 
 [dependencies]
 glium = "*"
+cgmath = "^0.10.0"
