@@ -8,37 +8,43 @@ struct Vertex {
 implement_vertex!(Vertex, position);
 
 fn main() {
-    use glium::{DisplayBuild, Surface};
+    use glium::{DisplayBuild, Surface, VertexBuffer, IndexBuffer, Program, uniforms};
+    use glium::glutin::{WindowBuilder, Event};
+    use glium::index::PrimitiveType;
 
-    let display = glium::glutin::WindowBuilder::new()
+    let display = WindowBuilder::new()
         .with_dimensions(1024, 786)
-        .with_title(format!("Hello, World!"))
+        .with_title("Hello, World!")
         .build_glium()
         .unwrap();
 
-    let shape = vec![
+    let shape = [
         Vertex { position: [-1.0, -1.0] },
         Vertex { position: [-1.0, 1.0] },
         Vertex { position: [1.0, 1.0] },
-        // Vertex { position: [1.0, -1.0] },
+        Vertex { position: [1.0, -1.0] },
     ];
-    let vertex_buffer = glium::VertexBuffer::new(&display, &shape).unwrap();
-    let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
+    let indices = [
+        0u8, 1, 2,
+        2, 3, 0,
+    ];
+    let vertex_buffer = VertexBuffer::new(&display, &shape).unwrap();
+    let indices = IndexBuffer::new(&display, PrimitiveType::TrianglesList, &indices).unwrap();
 
     let vertex_shader_src = include_str!("vertex.glsl");
     let fragment_shader_src = include_str!("fragment.glsl");
-    let program = glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
+    let program = Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
 
     loop {
         let mut frame = display.draw();
         frame.clear_color(0.0, 0.0, 0.0, 0.0);
-        frame.draw(&vertex_buffer, &indices, &program, &glium::uniforms::EmptyUniforms,
+        frame.draw(&vertex_buffer, &indices, &program, &uniforms::EmptyUniforms,
                    &Default::default()).unwrap();
         frame.finish().expect("Succeeded drawing");
 
         for ev in display.poll_events() {
             match ev {
-                glium::glutin::Event::Closed => return,
+                Event::Closed => return,
                 _ => (),
             }
         }
