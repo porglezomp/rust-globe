@@ -33,8 +33,8 @@ fn main() {
     let vertex_buffer = VertexBuffer::new(&display, &shape).unwrap();
     let indices = IndexBuffer::new(&display, PrimitiveType::TrianglesList, &indices).unwrap();
 
-    let vertex_shader_src = include_str!("vertex.glsl");
-    let fragment_shader_src = include_str!("fragment.glsl");
+    let vertex_shader_src = include_str!("shader.vert");
+    let fragment_shader_src = include_str!("shader.frag");
     let program = Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
 
     let matrix = Matrix4::from_translation(Vector3::new(0.5, 0.3, 0.2)) * Matrix4::from_scale(0.5f32);
