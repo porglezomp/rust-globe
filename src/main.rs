@@ -8,7 +8,7 @@ struct Vertex {
 implement_vertex!(Vertex, position);
 
 fn main() {
-    use glium::{DisplayBuild, Surface, VertexBuffer, IndexBuffer, Program, uniforms};
+    use glium::{DisplayBuild, Surface, VertexBuffer, IndexBuffer, Program};
     use glium::glutin::{WindowBuilder, Event};
     use glium::index::PrimitiveType;
 
@@ -35,10 +35,12 @@ fn main() {
     let fragment_shader_src = include_str!("fragment.glsl");
     let program = Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
 
+    let mut t: f32 = 0.0;
     loop {
+        t += 0.01;
         let mut frame = display.draw();
         frame.clear_color(0.0, 0.0, 0.0, 0.0);
-        frame.draw(&vertex_buffer, &indices, &program, &uniforms::EmptyUniforms,
+        frame.draw(&vertex_buffer, &indices, &program, &uniform! { t: t },
                    &Default::default()).unwrap();
         frame.finish().expect("Succeeded drawing");
 
