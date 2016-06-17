@@ -1,8 +1,12 @@
 #version 140
 
-in vec3 attr;
 out vec4 color;
+in float progress;
+
+uniform float time;
 
 void main() {
-  color = vec4(attr + 0.5, 1.0);
+  float factor = smoothstep(0.0, 1.0, clamp((time - progress) * 0.06, 0.0, 1.0));
+  vec4 potential_color = mix(vec4(0.9, 1.0, 0.9, 1.0), vec4(0.2, 0.8, 0.2, 0.7), factor);
+  color = (time > progress) ? potential_color : vec4(0.0);
 }
