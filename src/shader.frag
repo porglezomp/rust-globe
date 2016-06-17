@@ -1,8 +1,8 @@
 #version 140
 
-in vec2 attr;
+in vec3 attr;
 out vec4 color;
 
 void main() {
-  color = vec4(1.0, attr, 1.0);
+  color = vec4(attr + 0.5, 1.0);
 }
