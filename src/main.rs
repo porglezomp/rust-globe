@@ -15,6 +15,15 @@ struct Vertex {
 }
 implement_vertex!(Vertex, position, order);
 
+fn init_view(w: u32, h: u32) -> Matrix4<f32> {
+    Matrix4::from(PerspectiveFov {
+        fovy: Rad { s: 2.0 },
+        aspect: w as f32 / h as f32,
+        near: 0.1,
+        far: 10.0,
+    }) * Matrix4::from_translation(Vector3::new(0.0, 0.0, -1.5))
+}
+
 fn main() {
     let display = WindowBuilder::new()
         .with_dimensions(1024, 786)
@@ -23,7 +32,7 @@ fn main() {
         .build_glium()
         .unwrap();
 
-    let (shape, indices) = generate_sphere(14, 20);
+    let (shape, indices) = generate_sphere(8, 12);
     let vertex_buffer = VertexBuffer::new(&display, &shape).unwrap();
     let indices = IndexBuffer::new(&display, PrimitiveType::LinesList, &indices).unwrap();
 
@@ -41,13 +50,8 @@ fn main() {
             return;
         }
     };
-    let view: Matrix4<f32> = PerspectiveFov {
-        fovy: Rad { s: 2.0 },
-        aspect: 1024.0 / 786.0,
-        near: 0.1,
-        far: 10.0,
-    }.into();
-    let view = view * Matrix4::from_translation(Vector3::new(0.0, 0.0, -1.5));
+
+    let mut view = init_view(1024, 786);
 
     let mut orientation = Quaternion::<f32>::one();
     let mut drag = false;
@@ -91,10 +95,17 @@ fn main() {
                     mouse_x = x;
                     mouse_y = y;
                 }
+                Event::Resized(w, h) => {
+                    view = init_view(w, h);
+                    println!("Resized to {}x{}", w, h);
+                }
                 _ => (),
             }
         }
-        time += 0.1;
+
+        if !drag {
+            time += 0.1;
+        }
     }
 }
 
@@ -102,22 +113,38 @@ fn generate_sphere(lat_count: u32, lon_count: u32) -> (Vec<Vertex>, Vec<u16>) {
     let mut shape = Vec::new();
     let mut indices = Vec::new();
 
+    if lat_count < 3 || lon_count < 3 {
+        return (shape, indices);
+    }
+
+    let fac = std::f32::consts::PI * 2.0 / lon_count as f32;
     let mut order = 0.0;
+
+    for lon in 0..lon_count {
+        let start_index = shape.len();
+        let horizontal_angle = lon as f32 * fac;
+        let x = horizontal_angle.cos();
+        let y = horizontal_angle.sin();
+        for lat in 0..lat_count {
+            let vertical_angle = (lat+1) as f32 * std::f32::consts::PI / (lat_count+1) as f32;
+            let z = vertical_angle.cos();
+            let r = vertical_angle.sin();
+            let (x, y) = (x * r, y * r);
+            shape.push(Vertex { position: [x, y, z], order: order });
+            order += 1.0;
+
+            if lat != lat_count - 1 {
+                let index = start_index as u16 + lat as u16;
+                indices.push(index);
+                indices.push(index + 1);
+            }
+        }
+    }
+
     for lat in 0..lat_count {
         let vertical_angle = (lat+1) as f32 * std::f32::consts::PI / (lat_count+1) as f32;
         let z = vertical_angle.cos();
         let r = vertical_angle.sin();
-        let fac = std::f32::consts::PI * 2.0 / lon_count as f32;
-
-        if lat != 0 {
-            for lon in (0..lon_count).chain(Some(0)) {
-                let horizontal_angle = lon as f32 * fac;
-                let x = horizontal_angle.cos() * r;
-                let y = horizontal_angle.sin() * r;
-                shape.push(Vertex { position: [x, y, z], order: order });
-                order += 2.0;
-            }
-        }
 
         let start_index = shape.len();
         let mut first = true;
@@ -135,25 +162,7 @@ fn generate_sphere(lat_count: u32, lon_count: u32) -> (Vec<Vertex>, Vec<u16>) {
             }
             first = false;
         }
-
-        if lat != lat_count - 1 {
-            let second_start = shape.len();
-            for lon in 0..lon_count {
-                let horizontal_angle = lon as f32 * fac;
-                let x = horizontal_angle.cos() * r;
-                let y = horizontal_angle.sin() * r;
-                shape.push(Vertex { position: [x, y, z], order: order });
-                order += 2.0;
-            }
-            order -= (lon_count * 2) as f32;
-            order += 1.0;
-
-            for lon in 0..lon_count {
-                let base = second_start as u16 + lon as u16;
-                indices.push(base);
-                indices.push(base + lon_count as u16);
-            }
-        }
     }
+
     (shape, indices)
 }
